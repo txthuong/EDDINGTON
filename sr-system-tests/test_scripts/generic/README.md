@@ -1,0 +1,1 @@
+Insert in this folder generic test scripts, based on the SR framework high-level interfaces (common.py, ble.py, etc...)

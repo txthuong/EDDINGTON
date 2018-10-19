@@ -1,0 +1,19 @@
+{
+    "_comment": "This is an example device configuration and shall be updated based on your local device configuration",
+    "devices": [
+        {
+            "manufacturer" : "Sierra Wireless",
+            "model": "BC310X",
+            "revision": "Beta.1.0",
+            "port": "COM35",
+            "baud": "115200"
+        },
+        {
+            "manufacturer" : "Sierra Wireless",
+            "model": "BC127",
+            "revision": "Melody Audio V7.2 RC2",
+            "port": "COM20",
+            "baud": "9600"
+        }
+    ]
+}

@@ -1,0 +1,1 @@
+Insert in this folder non-generic test scripts, specific to Eddington project.

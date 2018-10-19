@@ -1,0 +1,27 @@
+currentBuild.description = "Branch: ${sr_system_tests_branch}"
+timeout(time: 10, unit: 'MINUTES')
+{
+	node 
+	{
+        stage('Checkout')
+        {	
+            // Checkout SR System Tests framework
+            checkout([$class: 'GitSCM',
+                        branches: [[name: 'refs/remotes/${sr_system_tests_branch}']],			
+                        doGenerateSubmoduleConfigurations: false, 
+                        extensions: [[$class: 'CloneOption', depth: 0, honorRefspec: true, noTags: false, reference: '', shallow: false, timeout: 20], 
+                            [$class: 'RelativeTargetDirectory', relativeTargetDir: env.SR_SYSTEM_TESTS_PATH]], 
+                        submoduleCfg: [], 
+                        userRemoteConfigs: [[credentialsId: '44ab2a51-f488-49c4-8d77-64536e268a0e',
+                        name: 'origin_sr', refspec: '+refs/heads/*:refs/remotes/origin/*',
+                        url: 'ssh://git@stash.sierrawireless.local:7999/srapp/sr-system-tests.git']]])			
+        }
+        
+        stage('Static analysis')
+        {
+            // PyLint
+            bat 'pylint --output-format=parseable --reports=no sr_framework > pylint.log || exit 0'
+            warnings canComputeNew: false, canResolveRelativePaths: false, categoriesPattern: '', defaultEncoding: '', excludePattern: '', healthy: '', includePattern: '', messagesPattern: '', parserConfigurations: [[parserName: 'PyLint', pattern: 'pylint.log']], unHealthy: ''
+        }
+    }
+}
