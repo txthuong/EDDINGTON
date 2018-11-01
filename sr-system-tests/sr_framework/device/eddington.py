@@ -82,6 +82,13 @@ class Eddington(Board, CommonInterface, BleInterface, HWInterface):
             (str(x) if x is not None else '') for x in args)) + EDD_EOL)
         return self._get_result_from_response(command)
 
+    # txthuong
+    def _test(self, command):
+        """Read AT command."""
+        self._serial.serial_rx_clear()
+        self._serial.serial_write_data('AT{}'.format(command) + '=?' + EDD_EOL)
+        return self._get_result_from_response(command)
+
     def _custom_command(self, command):
         """Custom command."""
         self._serial.serial_rx_clear()

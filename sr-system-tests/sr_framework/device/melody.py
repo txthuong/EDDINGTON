@@ -133,7 +133,10 @@ class Melody(Board, CommonInterface, BleInterface, HWInterface):
         return self._get_result_from_response(success_string, error_string, timeout)
 
     def _send_raw_data(self, data):
-        self._serial.serial_write_data(bytearray(data))
+        #self._serial.serial_write_data(bytearray(data))
+        # txthuong
+        data = ''.join('{:02x}'.format(x) for x in data)
+        self._serial.serial_write_data(data)
 
     def _set_config(self, config, args):
         command = 'SET' + ' ' + config + '='
@@ -304,17 +307,22 @@ class Melody(Board, CommonInterface, BleInterface, HWInterface):
             args = ['{}'.format(len(adv_data))]
             if self._execute(command, args, success_string='PENDING') is BC127_RESULT_SUCCESS:
                 self._send_raw_data(adv_data)
-                if not self._serial.serial_search_regex('(OK)'):
+                # txthuong
+                #if not self._serial.serial_search_regex('(OK)'):
+                if not self._serial.serial_search_regex('(OK)', 1000):
                     return False
             else:
                 return False
+
         if scan_resp_data:
             # Set scan response data
             command = 'SSRD'
             args = ['{}'.format(len(scan_resp_data))]
             if self._execute(command, args, success_string='PENDING') is BC127_RESULT_SUCCESS:
                 self._send_raw_data(scan_resp_data)
-                if not self._serial.serial_search_regex('(OK)'):
+                # txthuong
+                #if not self._serial.serial_search_regex('(OK)'):
+                if not self._serial.serial_search_regex('(OK)', 1000):
                     return False
             else:
                 return False

@@ -10,6 +10,9 @@ from sr_framework.device.board import Board
 from sr_framework.device.common import CommonInterface
 from sr_framework.device.ble import BleInterface
 
+# txthuong
+from sr_framework.device.ble import GapInterface
+
 # Euler end of line character
 EUL_EOL = '\r'
 
@@ -26,7 +29,7 @@ EUL_BLE_GATT_SERV_HANDLE_OFFSET = 50
 EUL_BLE_GATT_SERV_HANDLE_RANGE = 100
 
 
-class Euler(Board, CommonInterface, BleInterface):
+class Euler(Board, CommonInterface, BleInterface, GapInterface):
     """
     Euler Board
     """
@@ -79,6 +82,27 @@ class Euler(Board, CommonInterface, BleInterface):
         self._serial.serial_rx_clear()
         self._serial.serial_write_data('AT{}'.format(command) + '?' + EUL_EOL)
         return self._get_result_from_response(command, timeout)
+
+    # txthuong
+    def _test(self, command, timeout=DEFAULT_COMMAND_TIMEOUT):
+        """Read AT command."""
+        self._serial.serial_rx_clear()
+        self._serial.serial_write_data('AT{}'.format(command) + '=?' + EUL_EOL)
+        return self._get_result_from_response(command, timeout)
+
+    # txthuong
+    def _write_invalid_command(self, command, args, timeout=DEFAULT_COMMAND_TIMEOUT):
+        """Write invalid AT command."""
+        self._serial.serial_rx_clear()
+        self._serial.serial_write_data('AT{}={}'.format(command, ','.join(
+            (str(x) if x is not None else '') for x in args)) + EUL_EOL)
+        all_regex = [r"\+CME ERROR: (\d+)", r"(ERROR)"]
+        for regex in all_regex:
+            response = self._serial.serial_search_regex(regex, timeout)
+            if response:
+                return response[0]
+                break
+        return None
 
     def _write(self, command, args, timeout=DEFAULT_COMMAND_TIMEOUT):
         """Write AT command."""
@@ -716,3 +740,21 @@ class Euler(Board, CommonInterface, BleInterface):
         if res:
             return res.split('\\0d\\0a')
         return None
+
+    # txthuong
+    def ble_set_scan_parameters(self, scan_type, scan_interval, scan_window):
+        """Function defined in GapInterface. """
+        command = '+SRBLESCANPARAMS'
+        if not self._enable_bluetooth():
+            return False
+        args = [scan_type, scan_interval, scan_window]
+        return self._write(command, args) is EUL_RESULT_SUCCESS
+
+    # txthuong
+    def ble_get_scan_parameters(self):
+        """Function defined in GapInterface. """
+        command = '+SRBLESCANPARAMS'
+        if self._query(command) is EUL_RESULT_SUCCESS:
+            regex = r"\+SRBLESCANPARAMS: (\d+),(\d+),(\d+)"
+            response = self._serial.serial_search_regex(regex)
+            return GapInterface.ScanParameter(int(response[0]), int(response[1]), int(response[2]))

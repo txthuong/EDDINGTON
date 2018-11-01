@@ -3,16 +3,16 @@
     "devices": [
         {
             "manufacturer" : "Sierra Wireless",
-            "model": "BC310X",
-            "revision": "Beta.1.0",
-            "port": "COM35",
+            "model": "BX310X",
+            "revision": "BX310x.2.5.0-1",
+            "port": "COM13",
             "baud": "115200"
         },
         {
             "manufacturer" : "Sierra Wireless",
             "model": "BC127",
-            "revision": "Melody Audio V7.2 RC2",
-            "port": "COM20",
+            "revision": "Melody Audio V7.2",
+            "port": "COM99",
             "baud": "9600"
         }
     ]
