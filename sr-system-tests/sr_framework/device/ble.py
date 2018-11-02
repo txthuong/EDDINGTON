@@ -126,15 +126,9 @@ class GapInterface:
             return not self == other
 
         def __str__(self):
-            '''
             return ('ScanRawResult: addr="%s", addr_type=%d, rssi=%d, raw data="%s"'
                     % (self.addr, self.addr_type, self.rssi,
                        ''.join('\\' + x for x in self.raw_data)))
-            '''
-            # txthuong
-            return ('ScanRawResult: addr="%s", addr_type=%d, rssi=%d, raw data="%s"'
-                    % (self.addr, self.addr_type, self.rssi,
-                       ''.join('\\' + '{:02x}'.format(x) for x in self.raw_data)))
 
     def ble_scan(self, duration, result_format=SCAN_RESULT_FORMAT_DEFAULT):
         """ Start scanning.
@@ -163,6 +157,35 @@ class GapInterface:
             bool: True for success, False otherwise.
         """
         pass
+
+    # TMA
+    def ble_get_scan_parameters(self):
+        """ Get scan parameter.
+
+        Returns:
+            ScanParameter object: (scan_type, scan_interval, scan_window)
+        """
+        pass
+
+    # TMA
+    class ScanParameter:
+        """ Scan parameter. """
+
+        def __init__(self, scan_type, scan_interval, scan_window):
+            self.scan_type = scan_type
+            self.scan_interval = scan_interval
+            self.scan_window = scan_window
+
+        def __eq__(self, other):
+            return (self.scan_type == other.scan_type and self.scan_interval == other.scan_interval
+                    and self.scan_window == other.scan_window)
+
+        def __ne__(self, other):
+            return not self == other
+
+        def __str__(self):
+            return ('ScanParameter: scan_type="%s", scan_interval=%d, scan_window=%d'
+                    % (self.scan_type, self.scan_interval, self.scan_window))
 
     def ble_connect(self, session_id, max_attempt=2):
         """ Connect a BLE session.
@@ -221,39 +244,6 @@ class GapInterface:
         """
         pass
 
-    # txthuong
-    class ScanParameter:
-        """ Scan parameter. """
-
-        def __init__(self, scan_type, scan_interval, scan_window):
-            self.scan_type = scan_type
-            self.scan_interval = scan_interval
-            self.scan_window = scan_window
-
-        def __eq__(self, other):
-            return (self.scan_type == other.scan_type and self.scan_interval == other.scan_interval and
-                    self.scan_window == other.scan_window)
-
-        def __str__(self):
-            return ('ScanParameter: scan_type="%s", scan_interval=%d, scan_window=%d'
-                    % (self.scan_type, self.scan_interval, self.scan_window))
-    # txthuong
-    def ble_set_scan_parameters(self, scan_type, scan_interval, scan_window):
-        """ Set scan parameter.
-
-        Returns:
-            bool: True if scan parameters were set successfully, False otherwise.
-        """
-        pass
-
-    # txthuong
-    def ble_get_scan_parameters(self):
-        """ Return the scan parameters.
-
-        Returns:
-            ScanParameter object
-        """
-        pass
 
 class GattInterface:
     """ Generic Attribute Profile (GATT) interface. """

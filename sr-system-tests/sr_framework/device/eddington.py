@@ -15,7 +15,7 @@ from sr_framework.device.hw import HWInterface
 EDD_EOL = '\r'
 
 # Eddington default command timeout (in seconds)
-DEFAULT_COMMAND_TIMEOUT = 2
+DEFAULT_COMMAND_TIMEOUT = 10
 
 # Eddington result codes
 EDD_RESULT_SUCCESS = 0
@@ -42,6 +42,11 @@ class Eddington(Board, CommonInterface, BleInterface, HWInterface):
                 result.append(ord(escaped_string[i]))
                 i += 1
         return result
+
+    # TMA
+    @staticmethod
+    def _convert_eddington_address_to_standard(addr):
+        return addr.upper()
 
     def _get_result_from_response(self, command):
         success_string = 'OK' if command != '+RST' else 'Ready'
@@ -80,13 +85,6 @@ class Eddington(Board, CommonInterface, BleInterface, HWInterface):
         self._serial.serial_rx_clear()
         self._serial.serial_write_data('AT{}={}'.format(command, ','.join(
             (str(x) if x is not None else '') for x in args)) + EDD_EOL)
-        return self._get_result_from_response(command)
-
-    # txthuong
-    def _test(self, command):
-        """Read AT command."""
-        self._serial.serial_rx_clear()
-        self._serial.serial_write_data('AT{}'.format(command) + '=?' + EDD_EOL)
         return self._get_result_from_response(command)
 
     def _custom_command(self, command):
@@ -209,6 +207,22 @@ class Eddington(Board, CommonInterface, BleInterface, HWInterface):
             return self._serial.serial_search_regex(regex)[0]
         return None
 
+    def common_read_bt_mac(self):
+        """Function defined in CommonInterface. """
+        command = '+MACADDR'
+        if self._query(command) is EDD_RESULT_SUCCESS:
+            regex = r"\+MACADDR: ([\w|:]{17})"
+            return self._serial.serial_search_regex(regex)[0]
+        return None
+
+    def common_read_fsn(self):
+        """Function defined in CommonInterface. """
+        command = '+CGSN'
+        if self._execute(command) is EDD_RESULT_SUCCESS:
+            regex = r"(\d[A-Z]\d{12})"
+            return self._serial.serial_search_regex(regex)[0]
+        return None
+
     def common_get_remote_controller(self):
         """Function defined in CommonInterface. """
         command = '+SRREMCTRL'
@@ -317,15 +331,68 @@ class Eddington(Board, CommonInterface, BleInterface, HWInterface):
                 conn_latency, supervision_timeout]
         return self._write(command, args) is EDD_RESULT_SUCCESS
 
+    # TMA (Note: Depend on DEFAULT_COMMAND_TIMEOUT)
     def ble_scan(self, duration, result_format=BleInterface.SCAN_RESULT_FORMAT_DEFAULT):
         """Function defined in GapInterface. """
-        warnings.warn('Not supported yet.')
-        return False
+        command = '+SRBLESCAN'
+        args = [duration, int(result_format)]
+        if result_format == BleInterface.SCAN_RESULT_FORMAT_DEFAULT:
+            if self._write(command, args) is EDD_RESULT_SUCCESS:
+                regex = r"\"([\w|:]{17})\",([0|1]),-(\d+),(\d+)(,\"(.+)\")?"
+                responses = self._serial.serial_search_regex_all(regex)
+                return [BleInterface.ScanResult(Eddington._convert_eddington_address_to_standard(resp[0]),
+                                                int(resp[1]),
+                                                int(resp[2]),
+                                                int(resp[3]),
+                                                resp[4])
+                        for resp in responses]
+        elif result_format == BleInterface.SCAN_RESULT_FORMAT_RAW_DATA:
+            if self._write(command, args) is EDD_RESULT_SUCCESS:
+                regex = r"\"([\w|:]{17})\",([0|1]),-(\d+),\"((\\[0-9A-F]{2})+)\""
+                responses = self._serial.serial_search_regex_all(regex)
+                return [BleInterface.ScanRawResult( \
+                            Eddington._convert_eddington_address_to_standard(resp[0]),
+                            int(resp[1]),
+                            int(resp[2]),
+                            Eddington._convert_escaped_string_to_data(resp[3]))
+                        for resp in responses]
+        else:
+            raise ValueError('invalid result_format')
+        return None
 
+    # TMA
     def ble_set_scan_parameters(self, scan_type, scan_interval, scan_window):
         """Function defined in GapInterface. """
-        warnings.warn('Not supported yet.')
-        return False
+        command = '+SRBLESCANPARAMS'
+        args = [scan_type, scan_interval, scan_window]
+        return self._write(command, args) is EDD_RESULT_SUCCESS
+
+    # TMA
+    def ble_get_scan_parameters(self):
+        """Function defined in GapInterface. """
+        command = '+SRBLESCANPARAMS'
+        if self._query(command) is EDD_RESULT_SUCCESS:
+            regex = r"\r\n\+SRBLESCANPARAMS: (\d+),(\d+),(\d+)\r\n"
+            response = self._serial.serial_search_regex(regex)
+            return BleInterface.ScanParameter(int(response[0]), int(response[1]), int(response[2]))
+        return None
+
+    # TMA
+    def ble_set_connection_parameters(self, session_id, conn_interval, conn_latency, supervision_timeout):
+        """Function defined in GapInterface. """
+        command = '+SRBLECONNPARAMS'
+        args = [session_id, conn_interval, conn_latency, supervision_timeout]
+        return self._write(command, args) is EDD_RESULT_SUCCESS
+
+    # TMA
+    def ble_get_connection_parameters(self):
+        """Function defined in GapInterface. """
+        command = '+SRBLECONNPARAMS'
+        if self._query(command) is EDD_RESULT_SUCCESS:
+            regex = r"\r\n\+SRBLECONNPARAMS: (\d+),(\d+),(\d+),(\d+)\r\n"
+            response = self._serial.serial_search_regex(regex)
+            return BleInterface.ScanParameter(int(response[0]), int(response[1]), int(response[2]), int(response[3]))
+        return None
 
     def ble_connect(self, session_id, max_attempt=2):
         """Function defined in GapInterface. """
@@ -372,7 +439,7 @@ class Eddington(Board, CommonInterface, BleInterface, HWInterface):
         """Function defined in GattInterface. """
         command = '+SRBLE'
         if self._query(command) is EDD_RESULT_SUCCESS:
-            regex = r"\+SRBLE: \"(\w+)\",(\d+),(\d)"
+            regex = r"\+SRBLE: \"([^\r]+)\",(\d+),(\d)"
             response = self._serial.serial_search_regex(regex)
             if response:
                 return int(response[1])

@@ -65,6 +65,22 @@ class CommonInterface:
         """
         pass
 
+    def common_read_fsn(self):
+        """ Get device serial number.
+
+        Returns:
+            str: Device serial number string.
+        """
+        pass
+
+    def common_read_bt_mac(self):
+        """ Get device BT MAC address.
+
+        Returns:
+            str: Device BT MAC address string.
+        """
+        pass
+
     def common_get_remote_controller(self):
         """ Get remote controller.
 

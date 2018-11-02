@@ -10,10 +10,10 @@
         },
         {
             "manufacturer" : "Sierra Wireless",
-            "model": "BC127",
-            "revision": "Melody Audio V7.2",
-            "port": "COM99",
-            "baud": "9600"
+            "model": "BX310X",
+            "revision": "BX310x.2.5.0-1",
+            "port": "COM15",
+            "baud": "115200"
         }
     ]
 }

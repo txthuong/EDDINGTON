@@ -25,3 +25,13 @@ def test_common_0004(dut):
 def test_common_0005(dut):
     """ Verify command to get the revision identification. """
     assert dut.common_read_revision_id() == dut.get_device_revision()
+
+
+def test_common_0006(dut):
+    """ Verify command to get the serial number. """
+    assert dut.common_read_fsn()
+
+
+def test_common_0007(dut):
+    """ Verify command to get the BT MAC address. """
+    assert dut.common_read_bt_mac()

@@ -106,13 +106,13 @@ class SerialPort:
     def serial_set_baudrate(self, new_baudrate):
         """ Set a new baudrate. """
         self.ser.baudrate = new_baudrate
-        time.sleep(0.5) # Wait for the baudrate to be modified.
+        time.sleep(0.1) # Wait for the baudrate to be modified.
         return True
 
     def serial_soft_flow_control(self, enable):
         """ Set the flow control mode. """
-        self.ser.xonxoff = enable
-        time.sleep(0.5) # Wait for the flow control to be modified.
+        self.ser.rtscts = enable
+        time.sleep(0.1) # Wait for the flow control to be modified.
         return True
 
     def serial_search_line_startswith(self, prefix, timeout=0):

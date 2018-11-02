@@ -133,10 +133,7 @@ class Melody(Board, CommonInterface, BleInterface, HWInterface):
         return self._get_result_from_response(success_string, error_string, timeout)
 
     def _send_raw_data(self, data):
-        #self._serial.serial_write_data(bytearray(data))
-        # txthuong
-        data = ''.join('{:02x}'.format(x) for x in data)
-        self._serial.serial_write_data(data)
+        self._serial.serial_write_data(bytearray(data))
 
     def _set_config(self, config, args):
         command = 'SET' + ' ' + config + '='
@@ -307,22 +304,17 @@ class Melody(Board, CommonInterface, BleInterface, HWInterface):
             args = ['{}'.format(len(adv_data))]
             if self._execute(command, args, success_string='PENDING') is BC127_RESULT_SUCCESS:
                 self._send_raw_data(adv_data)
-                # txthuong
-                #if not self._serial.serial_search_regex('(OK)'):
-                if not self._serial.serial_search_regex('(OK)', 1000):
+                if not self._serial.serial_search_regex('(OK)'):
                     return False
             else:
                 return False
-
         if scan_resp_data:
             # Set scan response data
             command = 'SSRD'
             args = ['{}'.format(len(scan_resp_data))]
             if self._execute(command, args, success_string='PENDING') is BC127_RESULT_SUCCESS:
                 self._send_raw_data(scan_resp_data)
-                # txthuong
-                #if not self._serial.serial_search_regex('(OK)'):
-                if not self._serial.serial_search_regex('(OK)', 1000):
+                if not self._serial.serial_search_regex('(OK)'):
                     return False
             else:
                 return False
@@ -359,7 +351,7 @@ class Melody(Board, CommonInterface, BleInterface, HWInterface):
                              args,
                              success_string='SCAN_OK',
                              timeout=duration+1) is BC127_RESULT_SUCCESS:
-                regex = r"SCAN (\w{12}) (0|1) <(.+)> ([0-9A-F]{2}) -(\d+)dBm" + BC127_EOL
+                regex = r"SCAN (\w{12}) (0|1) <([^\r]+)> ([0-9A-F]{2}) -(\d+)dBm" + BC127_EOL
                 responses = self._serial.serial_search_regex_all(regex)
                 return [BleInterface.ScanResult( \
                                 Melody._convert_melody_address_to_standard(resp[0]),
